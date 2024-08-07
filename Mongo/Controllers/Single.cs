@@ -19,9 +19,17 @@ public sealed class Single : ControllerBase
 
     [HttpPost]
     [Route("create-single")]
-    public async Task<IActionResult> Create()
+    public async Task<IActionResult> Create([FromQuery] string? title, [FromQuery] int? price)
     {
-        await db.InsertOneAsync(new Game { Id = Id, Title = "Ori" });
+        try
+        {
+            await db.InsertOneAsync(new Game { Id = Id, Title = title ?? "Ori", Price = price ?? 69 });
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+
         return Ok();
     }
 
@@ -29,7 +37,7 @@ public sealed class Single : ControllerBase
     [Route("update")]
     public async Task<IActionResult> Update()
     {
-        // update commands DO NOT create new resources by default
+        // update commands DO NOT create new resources by default, ie IsUpsert = false
 
         // 2 set commands modifying 1 field is okay
         // var update1 = Builders<Game>.Update.Set(x => x.Title, "Ori and Will of the Wisps #1");
@@ -80,6 +88,7 @@ public sealed class Single : ControllerBase
         //  "modifiedCount": 0,
         //  "upsertedId": null
         // }
+
         // var updateResult = await db.UpdateOneAsync(x => x.Id == Id, update, new UpdateOptions { IsUpsert = true });
 
         return Ok();
@@ -141,13 +150,14 @@ public sealed class Single : ControllerBase
 
         return Ok(new { resultWithFilter, resultWithLambda });
     }
-    
+
     [HttpGet]
     [Route("projection")]
     public async Task<IActionResult> Projection()
     {
         var projection = Builders<Game>.Projection.Include(x => x.Title).Include(x => x.Price);
 
+        // Id field is automatically excluded, unless specified explicitly
         var expression = Builders<Game>.Projection.Expression(x => new { x.Title, x.Price });
         // var expression = Builders<Game>.Projection.Expression(x => new Proj { Title = x.Title, Price = x.Price });
 

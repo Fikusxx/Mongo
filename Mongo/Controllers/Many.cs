@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Mongo.Common;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Mongo.Controllers;
@@ -22,7 +23,8 @@ public sealed class Many : ControllerBase
     {
         await db.InsertManyAsync([
             new Game { Id = Guid.NewGuid(), Title = "Ori" },
-            new Game { Id = Guid.NewGuid(), Title = "Ori" }
+            new Game { Id = Guid.NewGuid(), Title = "Ori" },
+            new Game { Id = Guid.NewGuid(), Title = "Ori" },
         ]);
 
         return Ok();
@@ -69,14 +71,18 @@ public sealed class Many : ControllerBase
 
         var resultWithLambda = await db.Find(x => x.Title == "Ori").ToListAsync();
 
-        return Ok(new { resultWithFilter, resultWithLambda });
+        var resultWithOptions = await db.Find(x => x.Title == "Ori", new FindOptions { BatchSize = 2 }).ToListAsync();
+
+        return Ok(new { resultWithFilter, resultWithLambda, resultWithOptions });
     }
 
     [HttpGet]
     [Route("sorting")]
     public async Task<IActionResult> Sorting()
     {
-        var sorting = Builders<Game>.Sort.Ascending(x => x.Price);
+        var sorting = Builders<Game>.Sort
+            .Ascending(x => x.Title)
+            .Descending(x => x.Price);
 
         var result = await db.Find(_ => true).Sort(sorting).ToListAsync();
 
@@ -103,38 +109,64 @@ public sealed class Many : ControllerBase
 
         return Ok(result);
     }
-    
+
     /// <summary>
-    /// TODO
+    /// https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/aggregation/
+    /// </summary>
+    [HttpGet]
+    [Route("aggregate")]
+    public async Task<IActionResult> Aggregate()
+    {
+        List<Game> dummyGames =
+        [
+            new Game { Id = Guid.NewGuid(), Title = "Ori", Price = 123 },
+            new Game { Id = Guid.NewGuid(), Title = "Ori", Price = 123 },
+            new Game { Id = Guid.NewGuid(), Title = "HK", Price = 55 },
+            new Game { Id = Guid.NewGuid(), Title = "HK", Price = 55 },
+        ];
+
+        await db.InsertManyAsync(dummyGames);
+
+        // Aggregate approach
+        var sortFilter = Builders<Game>.Sort.Ascending(x => x.Title);
+        var matchFilter = Builders<Game>.Filter.Empty; // all objects, _ => true
+
+        var builder = new EmptyPipelineDefinition<Game>()
+            .Match(matchFilter)
+            .Sort(sortFilter)
+            .Group(x => x.Title,
+                games => new
+                {
+                    Key = games.Key,
+                    AvgPrice = games.Sum(x => x.Price)
+                });
+
+        var aggregateResult = await db.Aggregate(builder).ToListAsync();
+
+        // LINQ approach
+        var linqResult = db.AsQueryable()
+            .Where(_ => true) // obsolete
+            .OrderBy(x => x.Title)
+            .GroupBy(x => x.Title, (key, games) => new
+            {
+                Key = key,
+                AvgPrice = games.Sum(x => x.Price)
+            })
+            .ToList();
+
+        return Ok(new { aggregateResult, linqResult });
+    }
+
+    /// <summary>
+    /// Search commands only allowed on Atlas
+    /// https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/atlas-search/#overview
     /// </summary>
     [HttpGet]
     [Route("searching")]
     public IActionResult Searching()
     {
-        // Aggregation search commands only allowed on Atlas
-        // https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/atlas-search/
         var result = db.Aggregate().Search(Builders<Game>.Search.Phrase(x => x.Title, "r")).ToList();
 
         return Ok(result);
-    }
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    [HttpGet]
-    [Route("joining")]
-    public IActionResult Joining()
-    {
-        // Lookup<TForeignDocument, TNewResult>(string foreignCollectionName,
-        // FieldDefinition<TResult> localField,
-        // FieldDefinition<TForeignDocument> foreignField,
-        // FieldDefinition<TNewResult> @as,
-        // AggregateLookupOptions<TForeignDocument,
-        // TNewResult> options = null);
-
-        //var result = db.Aggregate().Lookup<TForeignDocument, TNewResult>("otherCollection",
-        //	game => game.PlayerId, player => player.Id, new { props });
-
-        return Ok();
     }
 }

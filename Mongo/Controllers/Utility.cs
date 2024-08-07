@@ -37,6 +37,7 @@ public sealed class Utility : ControllerBase
     [Route("purge")]
     public async Task<IActionResult> PurgeCollection()
     {
+        // await  db.Database.DropCollectionAsync("Games"); doesnt work on existing collection?
         await db.DeleteManyAsync(_ => true);
 
         return Ok();

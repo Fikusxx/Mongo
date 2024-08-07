@@ -16,6 +16,15 @@ public sealed class Schema : ControllerBase
         var client = new MongoClient(DBConstants.ConnectionString);
         this.db = client.GetDatabase("Personal").GetCollection<Game>(name: "Games");
     }
+
+    [HttpPost]
+    [Route("create")]
+    public async Task<IActionResult> Create()
+    {
+	    await ChangeSchemaValidation();
+
+	    return Ok();
+    }
     
     private void CreateCollection()
     {
@@ -27,33 +36,41 @@ public sealed class Schema : ControllerBase
         });
     }
 
-    private async Task ChangeSchemaValidation()
+    /// <summary>
+    /// https://www.devxperiences.com/pzwp1/2022/03/11/mongodb-schema-validation-rules/
+    /// </summary>
+    private async Task<BsonDocument> ChangeSchemaValidation()
     {
-        var jsonSchema = """
-                         { collMod: "Games",
-                         		validator: {
-                         			$jsonSchema: {
-                         				bsonType: "object",
-                         				required: [ "Title", "Price" ],
-                         				properties: {
-                         				Title: {
-                         					bsonType: "string",
-                         					minLength: 3,
-                         					description: "must be a string of at least 3 characters and is required"
-                         				},
-                         				Price: {
-                         					bsonType: "int???",
-                         					description: "must be a ...."
-                         				}
-                         				}
-                         			}
-                         		},
-                         		validationAction: "error",
-                         		validationLevel: "strict",
-                         		}
-                         """;
+        const string jsonSchema = """
+                                  { collMod: "Games",
+                                  		validator: {
+                                  			$jsonSchema: {
+                                  				bsonType: "object",
+                                  				required: [ "Title", "Price" ],
+                                  				properties: {
+                                  				Title: {
+                                  					bsonType: "string",
+                                  					minLength: 1,
+                                  					maxLength: 20,
+                                  					description: "must be a string of at least 1 to 20 characters and is required"
+                                  				},
+                                  				Price: {
+                                  					bsonType: "int",
+                                  					minimum: 1,
+                                  					maximum: 1000
+                                  					description: "must be from 1$ to 1000$"
+                                  				}
+                                  				}
+                                  			}
+                                  		},
+                                  		validationAction: "error",
+                                  		validationLevel: "strict",
+                                  }
+                                  """;
         
         var command = new JsonCommand<BsonDocument>(jsonSchema);
-        await db.Database.RunCommandAsync(command);
+        var result = await db.Database.RunCommandAsync(command);
+
+        return result;
     }
 }
