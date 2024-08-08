@@ -21,10 +21,16 @@ public sealed class Many : ControllerBase
     [Route("create")]
     public async Task<IActionResult> Create()
     {
+        // await db.InsertManyAsync([
+        //     new Game { Id = Guid.NewGuid(), Title = "Ori" },
+        //     new Game { Id = Guid.NewGuid(), Title = "Ori" },
+        //     new Game { Id = Guid.NewGuid(), Title = "Ori" },
+        // ]);
+
         await db.InsertManyAsync([
-            new Game { Id = Guid.NewGuid(), Title = "Ori" },
-            new Game { Id = Guid.NewGuid(), Title = "Ori" },
-            new Game { Id = Guid.NewGuid(), Title = "Ori" },
+            new Game { Id = Guid.NewGuid() },
+            new Game { Id = Guid.NewGuid() },
+            new Game { Id = Guid.NewGuid() },
         ]);
 
         return Ok();
@@ -103,7 +109,7 @@ public sealed class Many : ControllerBase
         await db.InsertManyAsync(dummyGames);
 
         var result = db.AsQueryable()
-            .Where(x => x.Title.Contains("Ori"))
+            .Where(x => x.Title != null && x.Title.Contains("Ori"))
             .Where(x => x.Price < 50)
             .Select(x => new { x.Title, x.Price }).ToList();
 
