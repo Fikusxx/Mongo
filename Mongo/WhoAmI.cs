@@ -14,8 +14,8 @@ public static class WhoAmI
     {
         BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
         // BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
-
-
+        
+        
         BsonClassMap.RegisterClassMap<Game>(map =>
         {
             // default behavior if none specified
@@ -45,6 +45,32 @@ public static class WhoAmI
             map.SetIgnoreExtraElements(true);
         });
 
+        return services;
+    }
+
+    /// <summary>
+    /// // https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/logging/
+    /// </summary>
+    public static IServiceCollection AddMongoLogging(this IServiceCollection services)
+    {
+        // var categoriesConfiguration = new Dictionary<string, string>
+        // {
+        //     { "LogLevel:Default", "Debug" },
+        //     { "LogLevel:MongoDB.SDAM", "Error" }
+        // };
+        // var config = new ConfigurationBuilder()
+        //     .AddInMemoryCollection(categoriesConfiguration)
+        //     .Build();
+        // var loggerFactory = LoggerFactory.Create(b =>
+        // {
+        //     b.AddConfiguration(config);
+        //     b.AddSimpleConsole();
+        // });
+        //
+        // var settings = MongoClientSettings.FromConnectionString(DBConstants.ConnectionString);
+        // settings.LoggingSettings = new LoggingSettings(loggerFactory);
+        // var client = new MongoClient(settings);
+        
         return services;
     }
 }

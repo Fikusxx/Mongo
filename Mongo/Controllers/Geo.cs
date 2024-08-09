@@ -8,6 +8,7 @@ namespace Mongo.Controllers;
 
 /// <summary>
 /// https://www.mongodb.com/docs/manual/geospatial-queries/
+/// https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/geo/
 /// </summary>
 [ApiController]
 [Route("geo")]

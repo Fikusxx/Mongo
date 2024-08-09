@@ -6,6 +6,9 @@ using MongoDB.Driver.Core.Configuration;
 
 namespace Mongo.Controllers;
 
+/// <summary>
+/// https://www.mongodb.com/docs/drivers/csharp/current/faq/#how-does-connection-pooling-work-in-the-.net-c--driver-
+/// </summary>
 public sealed class Connection
 {
     private void PrivateDeployment()
@@ -16,8 +19,11 @@ public sealed class Connection
             Scheme = ConnectionStringScheme.MongoDB,
             Server = new MongoServerAddress("localhost", 27017),
             ServerApi = new ServerApi(ServerApiVersion.V1), // https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/stable-api/
+            MaxConnectionPoolSize = 100, // default
+            MaxConnectionLifeTime = TimeSpan.FromMinutes(30), // default
         };
 
+        // should be created ONCE for each process (app), i.e singleton
         var client = new MongoClient(settings);
         var db = client.GetDatabase("Personal").GetCollection<Game>(name: "Games");
     }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Mongo.Common;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Mongo.Controllers;
@@ -31,6 +32,18 @@ public sealed class Utility : ControllerBase
         var lambdaFilter = await db.CountDocumentsAsync(x => x.Title == "Ori"); // slow
 
         return Ok(new { preBuiltFilter, lambdaFilter, estimated, withOptions });
+    }
+
+    [HttpGet]
+    [Route("collections")]
+    public IActionResult GetCollections()
+    {
+        var result = db.Database.ListCollections()
+            .ToList()
+            .Select(x => x.ToString())
+            .ToList();
+
+        return Ok(result);
     }
 
     [HttpDelete]

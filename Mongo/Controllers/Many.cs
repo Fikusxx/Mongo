@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Mongo.Common;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Core.Configuration;
 
 namespace Mongo.Controllers;
 
