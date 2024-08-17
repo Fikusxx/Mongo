@@ -18,7 +18,7 @@ public sealed class Single : ControllerBase
     }
 
     [HttpPost]
-    [Route("create-single")]
+    [Route("create")]
     public async Task<IActionResult> Create([FromQuery] string? title, [FromQuery] int? price)
     {
         try
@@ -77,8 +77,12 @@ public sealed class Single : ControllerBase
         // Builders<Game>.Update.PullFilter(x => x.Genres, y => y == "value");
 
         var update = Builders<Game>.Update.Set(x => x.Title, "Ori and Will of the Wisps");
-        await db.FindOneAndUpdateAsync(x => x.Id == Id, update);
-
+        var oldDocument = await db.FindOneAndUpdateAsync(x => x.Id == Id, update);
+        var updateResult = await db.UpdateOneAsync(x => x.Id == Id, update);
+        
+        
+        // var updateResult = await db.UpdateOneAsync(x => x.Id == Id, update, new UpdateOptions { IsUpsert = true });
+        
         // new resource will be be created if it doesnt exist
         // updateResult
         // {
@@ -89,9 +93,7 @@ public sealed class Single : ControllerBase
         //  "upsertedId": null
         // }
 
-        // var updateResult = await db.UpdateOneAsync(x => x.Id == Id, update, new UpdateOptions { IsUpsert = true });
-
-        return Ok();
+        return Ok(new { oldDocument, updateResult });
     }
 
     [HttpPut]
@@ -110,7 +112,7 @@ public sealed class Single : ControllerBase
         };
 
         var replaceResult = await db.ReplaceOneAsync(filter, newGame);
-        // await db.FindOneAndReplaceAsync(x => x.Id == Id, newGame);
+        await db.FindOneAndReplaceAsync(x => x.Id == Id, newGame);
 
 
         // will fail cause game already has an Id which is different from Guid.NewGuid()
@@ -151,22 +153,13 @@ public sealed class Single : ControllerBase
         return Ok(new { resultWithFilter, resultWithLambda });
     }
 
-    [HttpGet]
-    [Route("projection")]
-    public async Task<IActionResult> Projection()
+    [HttpDelete]
+    [Route("purge")]
+    public async Task<IActionResult> Purge()
     {
-        var projection = Builders<Game>.Projection.Include(x => x.Title).Include(x => x.Price);
+        // await  db.Database.DropCollectionAsync("Games");
+        await db.DeleteManyAsync(_ => true);
 
-        // Id field is automatically excluded, unless specified explicitly
-        var expression = Builders<Game>.Projection.Expression(x => new { x.Title, x.Price });
-        // var expression = Builders<Game>.Projection.Expression(x => new Proj { Title = x.Title, Price = x.Price });
-
-        // class for projection (<T>) should have ALL properties for given "Includes" AND also an Id property, otherwise it will throw
-        var resultWithProjection = await db.Find(_ => true).Project<dynamic>(projection).ToListAsync();
-
-        // expression works as is
-        var resultWithExpression = await db.Find(_ => true).Project(expression).ToListAsync();
-
-        return Ok(new { resultWithProjection, resultWithExpression });
+        return Ok();
     }
 }

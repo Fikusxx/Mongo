@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Mongo.Common;
-using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Configuration;
 
 namespace Mongo.Controllers;
 
@@ -28,12 +26,6 @@ public sealed class Many : ControllerBase
             new Game { Id = Guid.NewGuid(), Title = "Ori" },
         ]);
 
-        // await db.InsertManyAsync([
-        //     new Game { Id = Guid.NewGuid() },
-        //     new Game { Id = Guid.NewGuid() },
-        //     new Game { Id = Guid.NewGuid() },
-        // ]);
-
         return Ok();
     }
 
@@ -41,10 +33,10 @@ public sealed class Many : ControllerBase
     [Route("create-unordered")]
     public async Task<IActionResult> CreateUnordered()
     {
-        // if isOrdered = true, which is TRUE by default
-        // records will be inserted up until some insertion throws an error
-        // If true: 1 - inserted, 2 - throws an error, 3 - wont be inserted
-        // If false: 1 - inserted, 2 - throws an error, 3 - inserted
+        // default - true
+        // defines if records will be inserted up until some insertion throws an error
+        // true: 1 - inserted, 2 - throws an error, 3 - wont be inserted
+        // false: 1 - inserted, 2 - throws an error, 3 - inserted
 
         var id = Guid.NewGuid();
         await db.InsertManyAsync([
@@ -80,41 +72,26 @@ public sealed class Many : ControllerBase
 
         var resultWithOptions = await db.Find(x => x.Title == "Ori", new FindOptions { BatchSize = 2 }).ToListAsync();
 
-        return Ok(new { resultWithFilter, resultWithLambda, resultWithOptions });
+        var resultWithLinq = db.AsQueryable().Where(x => x.Title == "Ori").ToList();
+
+        return Ok(new { resultWithFilter, resultWithLambda, resultWithOptions, resultWithLinq });
     }
 
     [HttpGet]
-    [Route("sorting")]
-    public async Task<IActionResult> Sorting()
+    [Route("pagination")]
+    public async Task<IActionResult> Pagination()
     {
-        var sorting = Builders<Game>.Sort
-            .Ascending(x => x.Title)
-            .Descending(x => x.Price);
+        var native = await db.Find(x => x.Title == "Ori")
+            .Skip(0)
+            .Limit(2)
+            .ToListAsync();
 
-        var result = await db.Find(_ => true).Sort(sorting).ToListAsync();
+        var linq = db.AsQueryable().Where(x => x.Title == "Ori")
+            .Skip(0)
+            .Take(2)
+            .ToList();
 
-        return Ok(result);
-    }
-
-    [HttpGet]
-    [Route("queryable")]
-    public async Task<IActionResult> Queryable()
-    {
-        List<Game> dummyGames =
-        [
-            new Game { Id = Guid.NewGuid(), Title = "Ori #1", Price = 123 },
-            new Game { Id = Guid.NewGuid(), Title = "Ori #2", Price = 49 },
-            new Game { Id = Guid.NewGuid(), Title = "Ori #3", Price = 19 },
-        ];
-
-        await db.InsertManyAsync(dummyGames);
-
-        var result = db.AsQueryable()
-            .Where(x => x.Title != null && x.Title.Contains("Ori"))
-            .Where(x => x.Price < 50)
-            .Select(x => new { x.Title, x.Price }).ToList();
-
-        return Ok(result);
+        return Ok(new { native, linq });
     }
 
     /// <summary>
@@ -148,10 +125,9 @@ public sealed class Many : ControllerBase
                     AvgPrice = games.Sum(x => x.Price)
                 });
 
-        var aggregateResult = await db.Aggregate(builder).ToListAsync();
+        var native = await db.Aggregate(builder).ToListAsync();
 
-        // LINQ approach
-        var linqResult = db.AsQueryable()
+        var linq = db.AsQueryable()
             .Where(_ => true) // obsolete
             .OrderBy(x => x.Title)
             .GroupBy(x => x.Title, (key, games) => new
@@ -161,19 +137,6 @@ public sealed class Many : ControllerBase
             })
             .ToList();
 
-        return Ok(new { aggregateResult, linqResult });
-    }
-
-    /// <summary>
-    /// Search commands only allowed on Atlas
-    /// https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/atlas-search/#overview
-    /// </summary>
-    [HttpGet]
-    [Route("searching")]
-    public IActionResult Searching()
-    {
-        var result = db.Aggregate().Search(Builders<Game>.Search.Phrase(x => x.Title, "r")).ToList();
-
-        return Ok(result);
+        return Ok(new { native, linq });
     }
 }

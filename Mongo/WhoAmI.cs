@@ -12,8 +12,8 @@ public static class WhoAmI
 {
     public static IServiceCollection AddMongoSettings(this IServiceCollection services)
     {
-        BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
-        // BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
+        // BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+        BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
         
         
         BsonClassMap.RegisterClassMap<Game>(map =>
@@ -40,7 +40,8 @@ public static class WhoAmI
             //  .SetSerializer(new DateTimeSerializer(dateOnly: true)); if it's DateTime / DateTimeOffset takes only DateOnly part
             //  .SetSerializer(new DateTimeSerializer(DateTimeKind.Local));
 
-            // TRUE : ignores properties IN BSON that do NOT have a match for C# class property
+            // On deserialization from BSON to C# 
+            // TRUE : ignores properties in BSON that do NOT have a match for C# class property
             // FALSE: throws if BSON do NOT have a match for C# class property AND that property is either 1) mapped explicitly 2) automap is used
             map.SetIgnoreExtraElements(true);
         });

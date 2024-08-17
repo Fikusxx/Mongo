@@ -18,9 +18,18 @@ public sealed class Connection
         {
             Scheme = ConnectionStringScheme.MongoDB,
             Server = new MongoServerAddress("localhost", 27017),
-            ServerApi = new ServerApi(ServerApiVersion.V1), // https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/stable-api/
+            ServerApi = new ServerApi(ServerApiVersion
+                .V1), // https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/stable-api/
             MaxConnectionPoolSize = 100, // default
             MaxConnectionLifeTime = TimeSpan.FromMinutes(30), // default
+            
+            // https://www.mongodb.com/docs/manual/reference/write-concern/
+            // w - on how many instances (shards_ write should be acknowledged, default "majority"
+            // journal - WAL basically, default undefined. If "undefined" then based on "w" value and if journaling is enabled
+            // wTimeout - timeout you give server to respond on a write operation, default 200ms
+            // fsync - ???
+            WriteConcern = new WriteConcern(w: 1, wTimeout: TimeSpan.FromMilliseconds(200), fsync: null, journal: true),
+            ReadConcern = new ReadConcern()
         };
 
         // should be created ONCE for each process (app), i.e singleton
@@ -37,15 +46,7 @@ public sealed class Connection
         var settings = MongoClientSettings.FromConnectionString(connectionUri);
         settings.ServerApi = new ServerApi(ServerApiVersion.V1);
         var client = new MongoClient(settings);
-
-        try
-        {
-            var result = client.GetDatabase("admin").RunCommand<BsonDocument>(new BsonDocument("ping", 1));
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
+        var db = client.GetDatabase("admin").GetCollection<BsonDocument>("???");
     }
 
     private void Compression()
@@ -61,6 +62,7 @@ public sealed class Connection
                 new CompressorConfiguration(CompressorType.ZStandard),
             }
         };
+
         var client = new MongoClient(settings);
     }
 }

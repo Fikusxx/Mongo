@@ -104,4 +104,29 @@ public sealed class Linq : ControllerBase
 
         return Ok(result);
     }
+    
+    [HttpGet]
+    [Route("queryable")]
+    public async Task<IActionResult> Queryable()
+    {
+        List<Game> dummyGames =
+        [
+            new Game { Id = Guid.NewGuid(), Title = "Ori #1", Price = 123 },
+            new Game { Id = Guid.NewGuid(), Title = "Ori #2", Price = 49 },
+            new Game { Id = Guid.NewGuid(), Title = "Ori #3", Price = 19 },
+        ];
+
+        await gamesDb.InsertManyAsync(dummyGames);
+
+        var result = gamesDb.AsQueryable()
+            .Where(x => x.Title != null && x.Title.Contains("Ori"))
+            .Where(x => x.Price < 50)
+            .Select(x => new { x.Title, x.Price })
+            .ToList();
+
+        // clean up
+        await gamesDb.DeleteManyAsync(_ => true);
+
+        return Ok(result);
+    }
 }

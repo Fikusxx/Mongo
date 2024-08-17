@@ -1,0 +1,79 @@
+{
+  "collMod": "My-Collection-Name",
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "additionalProperties": false, // MongoDB rejects documents that contain fields not included in your schema's properties object.
+      "required": [
+        "username",
+        "email",
+        "password"
+      ],
+      "properties": {
+        "_id": {}, // should be explicitly specified if "additionalProperties": false
+        "username": {
+          "bsonType": "string",
+          "minLength": 6,
+          "maxLength": 20,
+          "description": "It is required and it must be a string with length between 6 and 20"
+        },
+        "password": {
+          "bsonType": "string",
+          "maxLength": 80,
+          "description": "It must be a string with max length 80"
+        },
+        "email": {
+          "bsonType": "string",
+          "minLength": 6,
+          "maxLength": 40,
+          "pattern": "[a-z0-9._%+!$&*=^|~#%{}/-]+@([a-z0-9-]+.){1,}([a-z]{2,22})",
+          "description": "It is required and it must be a string with length between 6 and 40 (regular expression pattern)"
+        },
+        "registrationDate": {
+          "bsonType": "date",
+          "description": "It must be a date"
+        },
+        "confirmed": {
+          "bsonType": "bool",
+          "description": "It can only be true or false"
+        },
+        "canceled": {
+          "bsonType": "bool",
+          "description": "It can only be true or false"
+        },
+        "typeid": {
+          "bsonType": "int",
+          "minimum": 1,
+          "maximum": 4,
+          "description": "It must be an integer in [ 1, 5 ]"
+        },
+        "countryId": {
+          "bsonType": "int",
+          "minimum": 1,
+          "maximum": 250,
+          "description": "It must be an integer in [ 1, 250 ]"
+        },
+        "major": {
+          "enum": [ "Math", "English", "Computer Science", "History", null ],
+          "description": "can only be one of the enum values and is required"
+        },
+        "address": {
+          "bsonType": "object",
+          "required": [ "city" ],
+          "properties": {
+            "street": {
+              "bsonType": "string",
+              "description": "must be a string if the field exists"
+            },
+            "city": {
+              "bsonType": "string",
+              "description": "must be a string and is required"
+            }
+          }
+        }
+      }
+    }
+  },
+  "validationLevel": "strict",
+  "validationAction": "error"
+}

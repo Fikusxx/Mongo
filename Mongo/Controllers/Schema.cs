@@ -5,6 +5,11 @@ using MongoDB.Driver;
 
 namespace Mongo.Controllers;
 
+/// <summary>
+/// https://www.mongodb.com/docs/v5.0/core/schema-validation/
+/// https://www.mongodb.com/docs/manual/core/schema-validation/specify-json-schema/json-schema-tips/
+/// https://www.mongodb.com/docs/manual/reference/bson-types/
+/// </summary>
 [ApiController]
 [Route("schema")]
 public sealed class Schema : ControllerBase
@@ -18,12 +23,12 @@ public sealed class Schema : ControllerBase
     }
 
     [HttpPost]
-    [Route("create")]
-    public async Task<IActionResult> Create()
+    [Route("apply")]
+    public async Task<IActionResult> Apply()
     {
-	    await ChangeSchemaValidation();
+	    var result = await ChangeSchemaValidation();
 
-	    return Ok();
+	    return Ok(result);
     }
     
     private void CreateCollection()
@@ -32,7 +37,9 @@ public sealed class Schema : ControllerBase
         {
             Validator = new FilterDefinitionBuilder<Game>().JsonSchema(BsonDocument.Parse("")),
             ValidationAction = DocumentValidationAction.Error,
-            ValidationLevel = DocumentValidationLevel.Strict
+            ValidationLevel = DocumentValidationLevel.Strict,
+            Capped = true, // default false
+            MaxSize = 100, // default long.MaxValue
         });
     }
 
