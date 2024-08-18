@@ -24,13 +24,13 @@ public class Extra : ControllerBase
         var projection = Builders<Game>.Projection.Exclude(x => x.Id).Include(x => x.Title).Include(x => x.Price);
 
         // Id field is automatically excluded, unless specified explicitly
-        var expression = Builders<Game>.Projection.Expression(x => new { x.Title, x.Price });
+        var expression = Builders<Game>.Projection.Expression<dynamic>(x => new { x.Title, x.Price });
 
         // class for projection (<T>) should have ALL properties for given "Includes" AND also an Id property (unless excluded), otherwise it will throw
         var nativeProjection = await db.Find(_ => true).Project<dynamic>(projection).ToListAsync();
 
         // expression works as is
-        var nativeExpression = await db.Find(_ => true).Project(expression).ToListAsync();
+        var nativeExpression = await db.Find(_ => true).Project<dynamic>(expression).ToListAsync();
 
         var linq = db.AsQueryable()
             .Select(x => new { x.Title, x.Price })

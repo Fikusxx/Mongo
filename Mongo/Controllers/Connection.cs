@@ -24,12 +24,15 @@ public sealed class Connection
             MaxConnectionLifeTime = TimeSpan.FromMinutes(30), // default
             
             // https://www.mongodb.com/docs/manual/reference/write-concern/
-            // w - on how many instances (shards_ write should be acknowledged, default "majority"
-            // journal - WAL basically, default undefined. If "undefined" then based on "w" value and if journaling is enabled
+            // w - on how many instances (shards) write should be acknowledged, default "majority"
+            // journal - WAL basically, default undefined. If "undefined" then its logic based on "w" value and if journaling is enabled
             // wTimeout - timeout you give server to respond on a write operation, default 200ms
             // fsync - ???
             WriteConcern = new WriteConcern(w: 1, wTimeout: TimeSpan.FromMilliseconds(200), fsync: null, journal: true),
-            ReadConcern = new ReadConcern()
+            
+            // https://www.mongodb.com/docs/manual/reference/read-concern/
+            // kinda line an isolation level on reads in rdbms
+            ReadConcern = new ReadConcern(level: ReadConcernLevel.Majority)
         };
 
         // should be created ONCE for each process (app), i.e singleton

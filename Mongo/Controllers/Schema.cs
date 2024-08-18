@@ -40,6 +40,11 @@ public sealed class Schema : ControllerBase
             ValidationLevel = DocumentValidationLevel.Strict,
             Capped = true, // default false
             MaxSize = 100, // default long.MaxValue
+            ClusteredIndex = new ClusteredIndexOptions<Game>()
+            {
+	            Key = Builders<Game>.IndexKeys.Ascending(r => r.Id),
+	            Unique = true
+            }
         });
     }
 

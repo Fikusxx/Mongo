@@ -62,6 +62,21 @@ public sealed class Many : ControllerBase
     }
 
     [HttpGet]
+    [Route("with-options")]
+    public async Task<IActionResult> WithOptions()
+    {
+        var options = new FindOptions()
+        {
+            BatchSize = 2
+        };
+        var cursor = await db.Find(x => x.Title == "Ori", new FindOptions { BatchSize = 2 }).ToCursorAsync();
+
+        var result = cursor.ToEnumerable().ToList();
+
+        return Ok(result);
+    }
+
+    [HttpGet]
     [Route("find-collection")]
     public async Task<IActionResult> GetCollection()
     {
@@ -70,7 +85,7 @@ public sealed class Many : ControllerBase
 
         var resultWithLambda = await db.Find(x => x.Title == "Ori").ToListAsync();
 
-        var resultWithOptions = await db.Find(x => x.Title == "Ori", new FindOptions { BatchSize = 2 }).ToListAsync();
+        var resultWithOptions = await db.Find(x => x.Title == "Ori", new FindOptions { BatchSize = 1 }).ToListAsync();
 
         var resultWithLinq = db.AsQueryable().Where(x => x.Title == "Ori").ToList();
 

@@ -17,6 +17,18 @@ public sealed class Single : ControllerBase
         this.db = client.GetDatabase("Personal").GetCollection<Game>(name: "Games");
     }
 
+    [HttpGet]
+    [Route("find-single")]
+    public async Task<IActionResult> Get()
+    {
+        var filter = Builders<Game>.Filter.Eq(x => x.Id, Id);
+        var resultWithFilter = await db.Find(filter).FirstOrDefaultAsync();
+
+        var resultWithLambda = await db.Find(x => x.Id == Id).FirstOrDefaultAsync();
+
+        return Ok(new { resultWithFilter, resultWithLambda });
+    }
+
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> Create([FromQuery] string? title, [FromQuery] int? price)
@@ -79,19 +91,17 @@ public sealed class Single : ControllerBase
         var update = Builders<Game>.Update.Set(x => x.Title, "Ori and Will of the Wisps");
         var oldDocument = await db.FindOneAndUpdateAsync(x => x.Id == Id, update);
         var updateResult = await db.UpdateOneAsync(x => x.Id == Id, update);
-        
-        
+
         // var updateResult = await db.UpdateOneAsync(x => x.Id == Id, update, new UpdateOptions { IsUpsert = true });
         
-        // new resource will be be created if it doesnt exist
-        // updateResult
-        // {
-        //	"isAcknowledged": true,
-        //  "isModifiedCountAvailable": true,
-        //  "matchedCount": 0,
-        //  "modifiedCount": 0,
-        //  "upsertedId": null
-        // }
+         // updateResult
+         // {
+        	// "isAcknowledged": true,
+         //  "isModifiedCountAvailable": true,
+         //  "matchedCount": 0,
+         //  "modifiedCount": 0,
+         //  "upsertedId": null
+         // }
 
         return Ok(new { oldDocument, updateResult });
     }
@@ -112,45 +122,33 @@ public sealed class Single : ControllerBase
         };
 
         var replaceResult = await db.ReplaceOneAsync(filter, newGame);
-        await db.FindOneAndReplaceAsync(x => x.Id == Id, newGame);
+        var replacedDocument = await db.FindOneAndReplaceAsync(x => x.Id == Id, newGame);
 
 
         // will fail cause game already has an Id which is different from Guid.NewGuid()
         // db.ReplaceOne(x => x.Id == Guid.NewGuid(), game, new ReplaceOptions { IsUpsert = true });
-
+        //
         // will not fail cause Id of the filter and the resource match, new Id = "Whatever Id"
         // var id = Guid.NewGuid();
         // game.Id = id;
         // db.ReplaceOne(x => x.Id == id, game, new ReplaceOptions { IsUpsert = true });
-
+        //
         // will not fail nor insert a new document, because IsUpsert = false
         // var id2 = Guid.NewGuid();
         // game.Id = id2;
         // db.ReplaceOne(x => x.Id == id2, game, new ReplaceOptions { IsUpsert = false });
 
 
-        // replaceResult
-        // {
-        //	"isAcknowledged": true,
-        //  "isModifiedCountAvailable": true,
-        //  "matchedCount": 0,
-        //  "modifiedCount": 0,
-        //  "upsertedId": null
-        // }
+         // replaceResult
+         // {
+         // "isAcknowledged": true,
+         //  "isModifiedCountAvailable": true,
+         //  "matchedCount": 0,
+         //  "modifiedCount": 0,
+         //  "upsertedId": null
+         // }
 
-        return Ok(replaceResult);
-    }
-
-    [HttpGet]
-    [Route("find-single")]
-    public async Task<IActionResult> Get()
-    {
-        var filter = Builders<Game>.Filter.Eq(x => x.Id, Id);
-        var resultWithFilter = await db.Find(filter).FirstOrDefaultAsync();
-
-        var resultWithLambda = await db.Find(x => x.Id == Id).FirstOrDefaultAsync();
-
-        return Ok(new { resultWithFilter, resultWithLambda });
+        return Ok(new { replaceResult, replacedDocument });
     }
 
     [HttpDelete]
@@ -158,8 +156,8 @@ public sealed class Single : ControllerBase
     public async Task<IActionResult> Purge()
     {
         // await  db.Database.DropCollectionAsync("Games");
-        await db.DeleteManyAsync(_ => true);
+        var deleteManyResult = await db.DeleteManyAsync(_ => true);
 
-        return Ok();
+        return Ok(deleteManyResult);
     }
 }
