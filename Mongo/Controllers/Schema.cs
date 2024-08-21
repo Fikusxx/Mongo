@@ -28,7 +28,7 @@ public sealed class Schema : ControllerBase
     {
 	    var result = await ChangeSchemaValidation();
 
-	    return Ok(result);
+	    return Ok(result.ToJson());
     }
     
     private void CreateCollection()

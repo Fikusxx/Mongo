@@ -60,7 +60,7 @@ public sealed class Indexes : ControllerBase
         var indexOptions = new CreateIndexOptions
         {
             ExpireAfter = TimeSpan.FromSeconds(10),
-            Background = true
+            Background = true,
         };
 
         return Ok(indexOptions);

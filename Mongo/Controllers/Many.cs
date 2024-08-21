@@ -62,21 +62,6 @@ public sealed class Many : ControllerBase
     }
 
     [HttpGet]
-    [Route("with-options")]
-    public async Task<IActionResult> WithOptions()
-    {
-        var options = new FindOptions()
-        {
-            BatchSize = 2
-        };
-        var cursor = await db.Find(x => x.Title == "Ori", new FindOptions { BatchSize = 2 }).ToCursorAsync();
-
-        var result = cursor.ToEnumerable().ToList();
-
-        return Ok(result);
-    }
-
-    [HttpGet]
     [Route("find-collection")]
     public async Task<IActionResult> GetCollection()
     {
@@ -104,52 +89,6 @@ public sealed class Many : ControllerBase
         var linq = db.AsQueryable().Where(x => x.Title == "Ori")
             .Skip(0)
             .Take(2)
-            .ToList();
-
-        return Ok(new { native, linq });
-    }
-
-    /// <summary>
-    /// https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/aggregation/
-    /// </summary>
-    [HttpGet]
-    [Route("aggregate")]
-    public async Task<IActionResult> Aggregate()
-    {
-        List<Game> dummyGames =
-        [
-            new Game { Id = Guid.NewGuid(), Title = "Ori", Price = 123 },
-            new Game { Id = Guid.NewGuid(), Title = "Ori", Price = 123 },
-            new Game { Id = Guid.NewGuid(), Title = "HK", Price = 55 },
-            new Game { Id = Guid.NewGuid(), Title = "HK", Price = 55 },
-        ];
-
-        await db.InsertManyAsync(dummyGames);
-
-        // Aggregate approach
-        var sortFilter = Builders<Game>.Sort.Ascending(x => x.Title);
-        var matchFilter = Builders<Game>.Filter.Empty; // all objects, _ => true
-
-        var builder = new EmptyPipelineDefinition<Game>()
-            .Match(matchFilter)
-            .Sort(sortFilter)
-            .Group(x => x.Title,
-                games => new
-                {
-                    Key = games.Key,
-                    AvgPrice = games.Sum(x => x.Price)
-                });
-
-        var native = await db.Aggregate(builder).ToListAsync();
-
-        var linq = db.AsQueryable()
-            .Where(_ => true) // obsolete
-            .OrderBy(x => x.Title)
-            .GroupBy(x => x.Title, (key, games) => new
-            {
-                Key = key,
-                AvgPrice = games.Sum(x => x.Price)
-            })
             .ToList();
 
         return Ok(new { native, linq });

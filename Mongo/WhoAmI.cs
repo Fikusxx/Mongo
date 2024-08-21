@@ -32,7 +32,7 @@ public static class WhoAmI
                 .SetIsRequired(true) // doesnt work?
                 .SetElementName("Title") // overrides [BsonElement("Title")]
                 .SetDefaultValue("Ori"); // doesnt work?
-
+            
             map.MapMember(x => x.Price);
             // .SetShouldSerializeMethod(x => ((Game)x).Price != 69); ignores on SERIALIZE to BSON
 

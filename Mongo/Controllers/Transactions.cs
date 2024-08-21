@@ -42,6 +42,7 @@ public sealed class Transactions : ControllerBase
         }
         catch (Exception e)
         {
+            await session.AbortTransactionAsync();
             return BadRequest(e.Message);
         } 
 

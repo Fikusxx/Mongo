@@ -68,8 +68,8 @@ public sealed class Single : ControllerBase
         // var update = Builders<Game>.Update.Min(x => x.Price, 60);
         // await db.FindOneAndUpdateAsync(x => x.Id == Id, update);
 
-        // Builders<Game>.Update.Inc(x => x.Qty, 5); - increment by 5
-        // Builders<Game>.Update.Inc(x => x.Qty, -5); - decrement by 5
+        // Builders<Game>.Update.Inc(x => x.Price, 5); - increment by 5
+        // Builders<Game>.Update.Inc(x => x.Price, -5); - decrement by 5
 
         // Builders<Game>.Update.Unset(x => x.Item);
         // deletes field completely from a document
@@ -93,15 +93,18 @@ public sealed class Single : ControllerBase
         var updateResult = await db.UpdateOneAsync(x => x.Id == Id, update);
 
         // var updateResult = await db.UpdateOneAsync(x => x.Id == Id, update, new UpdateOptions { IsUpsert = true });
-        
-         // updateResult
-         // {
-        	// "isAcknowledged": true,
-         //  "isModifiedCountAvailable": true,
-         //  "matchedCount": 0,
-         //  "modifiedCount": 0,
-         //  "upsertedId": null
-         // }
+
+        // updateResult
+        // {
+        // "isAcknowledged": true,
+        //  "isModifiedCountAvailable": true,
+        //  "matchedCount": 0,
+        //  "modifiedCount": 0,
+        //  "upsertedId": null
+        // }
+
+        // clean up
+        await db.DeleteManyAsync(_ => true);
 
         return Ok(new { oldDocument, updateResult });
     }
@@ -139,14 +142,14 @@ public sealed class Single : ControllerBase
         // db.ReplaceOne(x => x.Id == id2, game, new ReplaceOptions { IsUpsert = false });
 
 
-         // replaceResult
-         // {
-         // "isAcknowledged": true,
-         //  "isModifiedCountAvailable": true,
-         //  "matchedCount": 0,
-         //  "modifiedCount": 0,
-         //  "upsertedId": null
-         // }
+        // replaceResult
+        // {
+        // "isAcknowledged": true,
+        //  "isModifiedCountAvailable": true,
+        //  "matchedCount": 0,
+        //  "modifiedCount": 0,
+        //  "upsertedId": null
+        // }
 
         return Ok(new { replaceResult, replacedDocument });
     }
